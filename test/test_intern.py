@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from dataclasses import dataclass
+import unittest
+
 from typeguard.importhook import install_import_hook
 
 install_import_hook('intern')
-
-import unittest
 
 from intern.intern import intern, Intern
 
@@ -56,6 +57,44 @@ class Baz:
         self.t1 = t1
         self.set1 = set1
         self.kt1 = kt1
+
+
+@intern
+class Qux:
+    def __init__(self, s1: str, i1: int, l1: list, set1: set, kt1: tuple = ()):
+        self.s1 = s1
+        self.i1 = i1
+        self.l1 = l1
+        self.set1 = set1
+        self.kt1 = kt1
+
+
+def key_func_for_list(s1: str, i1: int, l1: list, set1: set, kt1: tuple = ()):
+    return s1, i1, tuple(l1), frozenset(set1), kt1
+
+
+@intern(key=key_func_for_list)
+class Quux:
+    def __init__(self, s1: str, i1: int, l1: list, set1: set, kt1: tuple = ()):
+        self.s1 = s1
+        self.i1 = i1
+        self.l1 = l1
+        self.set1 = set1
+        self.kt1 = kt1
+
+
+def key_by_id(s1: str, i1: int, l1: list, set1: set, kt1: tuple = ()):
+    return tuple(map(id, (s1, i1, l1, set1, kt1)))
+
+
+@intern(key=key_by_id)
+@dataclass
+class Xyzzy:
+    s1: str
+    i1: int
+    l1: list
+    set1: set
+    kt1: tuple = ()
 
 
 class TestIntern(unittest.TestCase):
@@ -99,6 +138,32 @@ class TestIntern(unittest.TestCase):
         self.assertIsNot(obj1, obj2)
         obj3 = Foo('test1', 1, ((1, 2), (3, 4)), frozenset((11, 10)))
         self.assertIs(obj2, obj3)
+
+    def test_list_no_key(self):
+        try:
+            Qux('test1', 1, [(1, 2), (3, 4)], {10, 11})
+        except TypeError:
+            pass
+        else:
+            self.fail("Expected TypeError: unhashable type: 'list'")
+
+    def test_list_with_key(self):
+        obj1 = Quux('test1', 1, [(1, 2), (3, 4)], {10, 11})
+        obj2 = Quux('test1', 1, [(1, 2), (3, 4)], {11, 10})
+        self.assertIs(obj1, obj2)
+        obj3 = Quux('test1', 1, [(1, 2), (3, 4)], {11, 10}, kt1=())
+        self.assertIs(obj1, obj3)
+        obj4 = Quux('test1', 1, [(1, 2), (3, 4)], {11, 10}, ())
+        self.assertIs(obj1, obj4)
+
+    def test_id_key(self):
+        list1 = [(1, 2), (3, 4)]
+        set1 = {10, 11}
+        obj1 = Xyzzy('test1', 1, list1, set1)
+        obj2 = Xyzzy('test1', 1, list1, set1, kt1=())
+        self.assertIs(obj1, obj2)
+        obj3 = Xyzzy('test1', 1, [(1, 2), (3, 4)], set1, kt1=())
+        self.assertIsNot(obj1, obj3)
 
 
 if __name__ == '__main__':
