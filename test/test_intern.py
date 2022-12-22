@@ -17,9 +17,9 @@ import unittest
 
 from typeguard.importhook import install_import_hook
 
-install_import_hook('intern')
+install_import_hook('metautils')
 
-from intern.intern import intern, Intern
+from metautils.intern import intern, Intern
 
 
 @intern
