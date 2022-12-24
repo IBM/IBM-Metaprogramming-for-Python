@@ -108,6 +108,8 @@ class TestIntern(unittest.TestCase):
         obj4 = Foo('test1', 1, ((1, 2), (3, 4)), frozenset((11, 10)), ())
         # different because optional parameter was given in obj4 but not in obj1
         self.assertIsNot(obj1, obj4)
+        # different because keyword parameter was given in different ways in obj3 and obj4
+        self.assertIsNot(obj3, obj4)
 
     def test_intern_with_key(self):
         obj1 = Bar('test1', 1, ((1, 2), (3, 4)), frozenset((10, 11)))
@@ -164,6 +166,30 @@ class TestIntern(unittest.TestCase):
         self.assertIs(obj1, obj2)
         obj3 = Xyzzy('test1', 1, [(1, 2), (3, 4)], set1, kt1=())
         self.assertIsNot(obj1, obj3)
+
+
+@intern(key=key_by_id)
+class Gritch:
+    def __init__(self, s1: str, i1: int, l1: list, set1: set, kt1: tuple = ()):
+        self.s1 = s1
+        self.i1 = i1
+        self.l1 = tuple(l1)
+        self.set1 = tuple(set1)
+        self.kt1 = kt1
+
+
+class TestIdWithGc(unittest.TestCase):
+    """
+    WARNING: This test case may fail, depending on the garbage-collection behavior of your Python version.
+
+    It passed on CPython 3.11.1 for x64.
+    """
+
+    def test1(self):
+        obj1 = Gritch('test1', 1, [(1, 2), (3, 4)], {10, 11})
+        obj2 = Gritch('test1', 1, [(10, 20), (30, 40)], {100, 110})
+        print(id(obj1), id(obj2))
+        self.assertIs(obj1, obj2)
 
 
 if __name__ == '__main__':
