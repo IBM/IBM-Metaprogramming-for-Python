@@ -46,17 +46,19 @@ class Intern:
         :param default_key: an optional function that returns an interning key given the decorated class
         """
         self.default_key = default_key
-        self.interned_classes = []
+        # self.interned_classes = []  # DEBUG
 
-    def __call__(self, cls: Optional[type] = None, *, key=None, reset_method: Optional[str] = 'reset_intern_memory'):
+    def __call__(self, cls: Optional[type] = None, *,
+                 key: Callable = None,
+                 reset_method: Optional[str] = 'reset_intern_memory'):
         """
         Decorator that interns elements of the class based on the parameters of the constructor.
 
         :param cls: class whose elements are to be interned
         :param key: an optional key function
         :param reset_method: the name of a method to be added to the class for resetting the interning table;
-        None to prevent the creation of this metho
-        :return: same class, with modified or added ``__new__`` and  ``__init__`` methods
+        None to prevent the creation of this method
+        :return: same class, with modified or added __new__ and  __init__ methods
         """
         if cls is None:
             return partial(self, key=key, reset_method=reset_method)
@@ -68,13 +70,12 @@ class Intern:
         # cls._intern_memory = memory  # DEBUG
 
         old_new = getattr(cls, '__new__')
-
         if old_new is object.__new__:
             def __new__(cls, *args, **kwargs):
                 element_key = (args, tuple(sorted(kwargs.items()))) if key is None else key(*args, **kwargs)
                 try:
                     result = memory[element_key]
-                    result.already_initialized = True
+                    setattr(result, '*already-initialized*', True)
                     return result
                 except KeyError:
                     result = object.__new__(cls)
@@ -85,7 +86,7 @@ class Intern:
                 element_key = (args, tuple(sorted(kwargs.items()))) if key is None else key(*args, **kwargs)
                 try:
                     result = memory[element_key]
-                    result.already_initialized = True
+                    setattr(result, '*already-initialized*', True)
                     return result
                 except KeyError:
                     result = old_new(cls, *args, **kwargs)
@@ -97,14 +98,14 @@ class Intern:
         init = getattr(cls, '__init__', None)
         if init is None:
             def __init__(self, *args, **kwargs):
-                if not (hasattr(self, 'already_initialized') and self.already_initialized):
+                if not (hasattr(self, '*already-initialized*') and getattr(self, '*already-initialized*')):
                     super().__init__(self, *args, **kwargs)
         else:
             @wraps(init)
             def __init__(self, *args, **kwargs):
-                if hasattr(self, 'already_initialized') and self.already_initialized:
-                    return
-                init(self, *args, **kwargs)
+                if not (hasattr(self, '*already-initialized*') and getattr(self, '*already-initialized*')):
+                    init(self, *args, **kwargs)
+
         setattr(cls, '__init__', __init__)
 
         if reset_method:
@@ -114,7 +115,7 @@ class Intern:
                 # cls._intern_memory = memory  # DEBUG
 
             setattr(cls, reset_method, reset_intern_method)
-            self.interned_classes.append(cls)
+            # self.interned_classes.append(cls)  # DEBUG
         return cls
 
 
