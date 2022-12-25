@@ -37,6 +37,9 @@ class Intern:
     Note that a constructor call that provides a keyword parameter with its default value will create an object
     different from one created with a call that does not provide this keyword parameter. This behavior can be
     overridden by a custom key.
+
+    For a detailed explanation, see the blog post
+    https://the-dusty-deck.blogspot.com/2022/12/metaprogramming-in-python-2-interning.html
     """
 
     def __init__(self, default_key: Optional[Callable[[type], Callable]] = None):

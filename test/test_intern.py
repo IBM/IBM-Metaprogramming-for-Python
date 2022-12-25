@@ -98,6 +98,12 @@ class Xyzzy:
 
 
 class TestIntern(unittest.TestCase):
+    """
+    Tests for the interning functionality.
+
+    For a detailed explanation, see the blog post
+    https://the-dusty-deck.blogspot.com/2022/12/metaprogramming-in-python-2-interning.html
+    """
     def test_default_intern(self):
         obj1 = Foo('test1', 1, ((1, 2), (3, 4)), frozenset((10, 11)))
         obj2 = Foo('test1', 1, ((1, 2), (3, 4)), frozenset((11, 10)))
