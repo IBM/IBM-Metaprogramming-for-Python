@@ -49,7 +49,7 @@ class Intern:
         :param default_key: an optional function that returns an interning key given the decorated class
         """
         self.default_key = default_key
-        # self.interned_classes = []  # DEBUG
+        self.interned_classes = []
 
     def __call__(self, cls: Optional[type] = None, *,
                  key: Callable = None,
@@ -118,7 +118,7 @@ class Intern:
                 # cls._intern_memory = memory  # DEBUG
 
             setattr(cls, reset_method, reset_intern_method)
-            # self.interned_classes.append(cls)  # DEBUG
+            self.interned_classes.append(cls)
         return cls
 
 
